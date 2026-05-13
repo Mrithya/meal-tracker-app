@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Personal Meal Builder</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Personal Meal Builder</h1>
+  <p>Local app. Data saves in your browser only.</p>
+</header>
+
+<section class="targets">
+  <h2>Daily Targets</h2>
+  <div class="grid">
+    <label>Calories <input id="targetCalories" type="number" value="1300"></label>
+    <label>Complete Protein <input id="targetProtein" type="number" value="105"></label>
+    <label>Carbs <input id="targetCarbs" type="number" value="120"></label>
+    <label>Fat <input id="targetFat" type="number" value="38"></label>
+    <label>Fiber <input id="targetFiber" type="number" value="25"></label>
+    <label>Water L <input id="targetWater" type="number" value="2.5" step="0.1"></label>
+  </div>
+</section>
+
+<section class="summary">
+  <h2>Today</h2>
+  <div id="summaryCards" class="cards"></div>
+  <div id="guidance" class="guidance"></div>
+</section>
+
+<section class="builder">
+  <h2>Meal Builder</h2>
+  <div class="controls">
+    <select id="meal">
+      <option>Breakfast</option><option>Mid Morning</option><option>Lunch</option><option>Snack</option><option>Dinner</option><option>Supplements</option>
+    </select>
+    <input id="search" placeholder="Search food">
+    <select id="foodSelect"></select>
+    <input id="qty" type="number" placeholder="grams or serving units" value="100">
+    <button id="addFood">Add</button>
+  </div>
+  <div id="servingInfo" class="small"></div>
+  <div id="mealSections"></div>
+</section>
+
+<section class="history">
+  <h2>Daily Log</h2>
+  <div class="controls">
+    <input id="weight" type="number" placeholder="Weight kg" step="0.1">
+    <input id="cycleDay" type="number" placeholder="Cycle day">
+    <input id="steps" type="number" placeholder="Steps">
+    <input id="water" type="number" placeholder="Water L" step="0.1">
+    <button id="saveDay">Save Today</button>
+    <button id="exportCsv">Export CSV</button>
+    <button id="clearToday">Clear Today</button>
+  </div>
+  <table id="historyTable"></table>
+</section>
+
+<script src="foods.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
