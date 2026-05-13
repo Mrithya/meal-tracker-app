@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "updatedAt": null,
+  "todayMeals": [],
+  "dailyHistory": [],
+  "targets": {
+    "calories": 1300,
+    "protein": 105,
+    "carbs": 120,
+    "fat": 38,
+    "fiber": 25,
+    "water": 2.5
+  },
+  "currentLog": {
+    "weight": "",
+    "cycleDay": "",
+    "steps": "",
+    "water": ""
+  }
+}

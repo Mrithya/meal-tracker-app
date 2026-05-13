@@ -9,7 +9,7 @@
 <body>
 <header>
   <h1>Personal Meal Builder</h1>
-  <p>Local app. Data saves in your browser only.</p>
+  <p>Local app. Data saves in your browser and can be backed up to iCloud Drive JSON.</p>
 </header>
 
 <section class="targets">
@@ -57,6 +57,16 @@
     <button id="clearToday">Clear Today</button>
   </div>
   <table id="historyTable"></table>
+</section>
+
+<section class="data-sync">
+  <h2>Data Retention</h2>
+  <div class="controls">
+    <button id="connectDataFile">Connect data.json</button>
+    <button id="exportJson">Export JSON</button>
+    <label class="fileButton">Import JSON <input id="importJson" type="file" accept="application/json,.json"></label>
+  </div>
+  <div id="dataStatus" class="small">Browser storage is active. Connect or import a JSON file to move data between devices.</div>
 </section>
 
 <script src="foods.js"></script>

@@ -1,6 +1,17 @@
 const meals = ["Breakfast","Mid Morning","Lunch","Snack","Dinner","Supplements"];
-let today = JSON.parse(localStorage.getItem("todayMeals") || "[]");
-let history = JSON.parse(localStorage.getItem("dailyHistory") || "[]");
+let connectedDataFileHandle = null;
+let dataSaveTimer = null;
+
+function readStorage(key, fallback){
+  try {
+    return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+  } catch {
+    return fallback;
+  }
+}
+
+let today = readStorage("todayMeals", []);
+let history = readStorage("dailyHistory", []);
 
 const keys = ["calories","completeProtein","totalProtein","carbs","fat","fiber","calcium","iron","potassium","selenium","omega3"];
 
@@ -27,6 +38,132 @@ function getTargets(){
     fat:+document.getElementById("targetFat").value,
     fiber:+document.getElementById("targetFiber").value,
     water:+document.getElementById("targetWater").value
+  }
+}
+
+function setTargets(targets={}){
+  const fields = {
+    calories: "targetCalories",
+    protein: "targetProtein",
+    carbs: "targetCarbs",
+    fat: "targetFat",
+    fiber: "targetFiber",
+    water: "targetWater"
+  };
+  Object.entries(fields).forEach(([key,id]) => {
+    if(targets[key] !== undefined && targets[key] !== null) document.getElementById(id).value = targets[key];
+  });
+}
+
+function getCurrentLog(){
+  return {
+    weight: document.getElementById("weight").value,
+    cycleDay: document.getElementById("cycleDay").value,
+    steps: document.getElementById("steps").value,
+    water: document.getElementById("water").value
+  };
+}
+
+function setCurrentLog(log={}){
+  ["weight","cycleDay","steps","water"].forEach(id => {
+    if(log[id] !== undefined && log[id] !== null) document.getElementById(id).value = log[id];
+  });
+}
+
+function buildDataSnapshot(){
+  return {
+    version: 1,
+    updatedAt: new Date().toISOString(),
+    todayMeals: today,
+    dailyHistory: history,
+    targets: getTargets(),
+    currentLog: getCurrentLog()
+  };
+}
+
+function applyDataSnapshot(data){
+  if(Array.isArray(data.todayMeals)) today = data.todayMeals;
+  if(Array.isArray(data.dailyHistory)) history = data.dailyHistory;
+  if(data.targets) setTargets(data.targets);
+  if(data.currentLog) setCurrentLog(data.currentLog);
+  saveBrowserState();
+  renderAll();
+}
+
+function saveBrowserState(){
+  localStorage.setItem("todayMeals", JSON.stringify(today));
+  localStorage.setItem("dailyHistory", JSON.stringify(history));
+  localStorage.setItem("mealTargets", JSON.stringify(getTargets()));
+  localStorage.setItem("currentLog", JSON.stringify(getCurrentLog()));
+}
+
+function hydrateBrowserState(){
+  setTargets(readStorage("mealTargets", {}));
+  setCurrentLog(readStorage("currentLog", {}));
+}
+
+function setDataStatus(message){
+  const status = document.getElementById("dataStatus");
+  if(status) status.textContent = message;
+}
+
+function queueDataFileSave(){
+  clearTimeout(dataSaveTimer);
+  dataSaveTimer = setTimeout(() => saveConnectedDataFile(), 300);
+}
+
+async function saveConnectedDataFile(){
+  if(!connectedDataFileHandle || !connectedDataFileHandle.createWritable) return;
+  try {
+    const writable = await connectedDataFileHandle.createWritable();
+    await writable.write(JSON.stringify(buildDataSnapshot(), null, 2));
+    await writable.close();
+    setDataStatus("Saved to connected data.json and browser storage.");
+  } catch (err) {
+    setDataStatus("Browser storage saved. Connected JSON save needs permission again.");
+  }
+}
+
+function downloadJson(){
+  saveBrowserState();
+  const blob = new Blob([JSON.stringify(buildDataSnapshot(), null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "data.json";
+  a.click();
+  URL.revokeObjectURL(url);
+  setDataStatus("Exported data.json. Keep it in this iCloud Drive app folder for backup.");
+}
+
+async function importJsonFile(file){
+  if(!file) return;
+  try {
+    const text = await file.text();
+    applyDataSnapshot(JSON.parse(text));
+    setDataStatus(`Imported ${file.name} into browser storage.`);
+  } catch (err) {
+    setDataStatus("That JSON file could not be imported.");
+  }
+}
+
+async function connectDataFile(){
+  if(!window.showOpenFilePicker) {
+    setDataStatus("This browser cannot directly update data.json. Use Export JSON and Import JSON for iCloud backup.");
+    return;
+  }
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      multiple: false,
+      types: [{description: "Meal tracker JSON", accept: {"application/json": [".json"]}}]
+    });
+    connectedDataFileHandle = handle;
+    const file = await handle.getFile();
+    const text = await file.text();
+    if(text.trim()) applyDataSnapshot(JSON.parse(text));
+    await saveConnectedDataFile();
+  } catch (err) {
+    setDataStatus("No data.json connected.");
   }
 }
 
@@ -142,7 +279,9 @@ function removeItem(id){
 }
 
 function saveTodayState(){
-  localStorage.setItem("todayMeals", JSON.stringify(today));
+  saveBrowserState();
+  queueDataFileSave();
+  if(!connectedDataFileHandle) setDataStatus("Saved to browser storage. Export or connect data.json for iCloud backup.");
 }
 
 function addFood(){
@@ -169,6 +308,7 @@ function saveDay(){
     ...t
   });
   localStorage.setItem("dailyHistory", JSON.stringify(history));
+  saveTodayState();
   renderHistory();
 }
 
@@ -204,7 +344,19 @@ document.getElementById("qty").addEventListener("input", () => syncServingFromSe
 document.getElementById("saveDay").addEventListener("click", saveDay);
 document.getElementById("exportCsv").addEventListener("click", exportCsv);
 document.getElementById("clearToday").addEventListener("click", clearToday);
-["targetCalories","targetProtein","targetCarbs","targetFat","targetFiber","targetWater"].forEach(id => document.getElementById(id).addEventListener("input", renderSummary));
+document.getElementById("connectDataFile").addEventListener("click", connectDataFile);
+document.getElementById("exportJson").addEventListener("click", downloadJson);
+document.getElementById("importJson").addEventListener("change", e => importJsonFile(e.target.files[0]));
+["weight","cycleDay","steps","water"].forEach(id => document.getElementById(id).addEventListener("input", () => {
+  saveBrowserState();
+  queueDataFileSave();
+}));
+["targetCalories","targetProtein","targetCarbs","targetFat","targetFiber","targetWater"].forEach(id => document.getElementById(id).addEventListener("input", () => {
+  saveBrowserState();
+  queueDataFileSave();
+  renderSummary();
+}));
 
+hydrateBrowserState();
 populateFoods();
 renderAll();
