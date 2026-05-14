@@ -18,6 +18,29 @@ let customFoods = readStorage("customFoods", []);
 
 const keys = ["calories","completeProtein","totalProtein","carbs","fat","fiber","calcium","iron","potassium","selenium","omega3"];
 
+function createItemId(){
+  return `meal-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function isSafeItemId(id){
+  return /^[-a-zA-Z0-9_.]+$/.test(String(id || ""));
+}
+
+function ensureTodayItemIds(){
+  let changed = false;
+  const seen = new Set();
+  today.forEach(item => {
+    if(!isSafeItemId(item.id) || seen.has(item.id)) {
+      item.id = createItemId();
+      changed = true;
+    }
+    seen.add(item.id);
+  });
+  return changed;
+}
+
+ensureTodayItemIds();
+
 function allFoods(){
   return [...FOODS, ...customFoods].sort((a,b) => a.name.localeCompare(b.name));
 }
@@ -27,6 +50,17 @@ function scaled(food, qty){
   const out = {name: food.name, category: food.category, qty: Number(qty), serving: Number(food.serving), note: food.note};
   keys.forEach(k => out[k] = +(food[k] * factor).toFixed(1));
   return out;
+}
+
+function foodFromLoggedItem(item){
+  const food = allFoods().find(f => f.name === item.name);
+  if(food) return food;
+  const qty = Number(item.qty || 0);
+  const serving = Number(item.serving || qty || 1);
+  const factor = qty ? serving / qty : 1;
+  const foodLike = {name: item.name, category: item.category, serving, note: item.note};
+  keys.forEach(k => foodLike[k] = +(Number(item[k] || 0) * factor).toFixed(1));
+  return foodLike;
 }
 
 function totals(items=today){
@@ -101,6 +135,7 @@ function applyDataSnapshot(data){
   if(Array.isArray(data.measurements)) measurements = data.measurements;
   if(Array.isArray(data.workouts)) workouts = data.workouts;
   if(Array.isArray(data.customFoods)) customFoods = data.customFoods;
+  ensureTodayItemIds();
   if(data.targets) setTargets(data.targets);
   if(data.currentLog) setCurrentLog(data.currentLog);
   saveBrowserState();
@@ -297,6 +332,10 @@ function formatQty(item){
   return `${count}<div class="small">${grams}g</div>`;
 }
 
+function editQtyControls(item){
+  return `<div class="qtyEditor"><div>${formatQty(item)}</div><div class="qtyEditRow"><input data-qty-input="${item.id}" type="number" min="0" step="0.1" value="${Number(item.qty || 0)}"><button class="updateQty" data-update-qty="${item.id}">Update</button></div></div>`;
+}
+
 function renderSummary(){
   const t = totals();
   const target = getTargets();
@@ -341,7 +380,7 @@ function renderMeals(){
     const mt = totals(items);
     return `<div class="meal"><h3>${meal}  <span class="small">${mt.calories} cal, ${mt.completeProtein}g complete protein</span></h3>
       <table><thead><tr><th>Food</th><th>Qty</th><th>Cal</th><th>Protein</th><th>Carbs</th><th>Fat</th><th></th></tr></thead>
-      <tbody>${items.map((i,idx) => `<tr><td>${i.name}<div class="small">${i.note||""}</div></td><td>${formatQty(i)}</td><td>${i.calories}</td><td>${i.completeProtein}</td><td>${i.carbs}</td><td>${i.fat}</td><td><button class="remove" onclick="removeItem('${i.id}')">x</button></td></tr>`).join("")}</tbody></table></div>`
+      <tbody>${items.map(i => `<tr><td>${i.name}<div class="small">${i.note||""}</div></td><td>${editQtyControls(i)}</td><td>${i.calories}</td><td>${i.completeProtein}</td><td>${i.carbs}</td><td>${i.fat}</td><td><button class="remove" data-remove-item="${i.id}">x</button></td></tr>`).join("")}</tbody></table></div>`
   }).join("");
 }
 
@@ -349,6 +388,33 @@ function removeItem(id){
   today = today.filter(i => i.id !== id);
   saveTodayState();
   renderAll();
+}
+
+function updateItemQty(id){
+  const input = document.querySelector(`[data-qty-input="${id}"]`);
+  const item = today.find(i => i.id === id);
+  const qty = Number(input && input.value);
+  if(!item || !qty || qty <= 0) return;
+  const updated = scaled(foodFromLoggedItem(item), qty);
+  updated.meal = item.meal;
+  updated.id = item.id;
+  today = today.map(i => i.id === id ? updated : i);
+  saveTodayState();
+  renderAll();
+}
+
+function handleQtyEditKey(event){
+  if(event.key === "Enter" && event.target && event.target.dataset.qtyInput) updateItemQty(event.target.dataset.qtyInput);
+}
+
+function handleMealSectionClick(event){
+  const updateButton = event.target.closest("[data-update-qty]");
+  if(updateButton) {
+    updateItemQty(updateButton.dataset.updateQty);
+    return;
+  }
+  const removeButton = event.target.closest("[data-remove-item]");
+  if(removeButton) removeItem(removeButton.dataset.removeItem);
 }
 
 function saveTodayState(){
@@ -364,7 +430,7 @@ function addFood(){
   if(!food || !qty) return;
   const item = scaled(food, qty);
   item.meal = meal;
-  item.id = Date.now().toString() + Math.random().toString(16).slice(2);
+  item.id = createItemId();
   today.push(item);
   saveTodayState();
   renderAll();
@@ -530,6 +596,8 @@ document.querySelectorAll("nav button").forEach(button => {
   });
 });
 
+on("mealSections", "click", handleMealSectionClick);
+on("mealSections", "keydown", handleQtyEditKey);
 on("addFood", "click", addFood);
 on("search", "input", populateFoods);
 on("foodSelect", "change", () => syncServingFromSelection(true));
