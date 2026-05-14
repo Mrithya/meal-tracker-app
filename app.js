@@ -18,6 +18,29 @@ let customFoods = readStorage("customFoods", []);
 
 const keys = ["calories","completeProtein","totalProtein","carbs","fat","fiber","calcium","iron","potassium","selenium","omega3"];
 
+function createItemId(){
+  return `meal-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function isSafeItemId(id){
+  return /^[-a-zA-Z0-9_.]+$/.test(String(id || ""));
+}
+
+function ensureTodayItemIds(){
+  let changed = false;
+  const seen = new Set();
+  today.forEach(item => {
+    if(!isSafeItemId(item.id) || seen.has(item.id)) {
+      item.id = createItemId();
+      changed = true;
+    }
+    seen.add(item.id);
+  });
+  return changed;
+}
+
+ensureTodayItemIds();
+
 function allFoods(){
   return [...FOODS, ...customFoods].sort((a,b) => a.name.localeCompare(b.name));
 }
@@ -112,6 +135,7 @@ function applyDataSnapshot(data){
   if(Array.isArray(data.measurements)) measurements = data.measurements;
   if(Array.isArray(data.workouts)) workouts = data.workouts;
   if(Array.isArray(data.customFoods)) customFoods = data.customFoods;
+  ensureTodayItemIds();
   if(data.targets) setTargets(data.targets);
   if(data.currentLog) setCurrentLog(data.currentLog);
   saveBrowserState();
@@ -425,7 +449,7 @@ function addFood(){
   if(!food || !qty) return;
   const item = scaled(food, qty);
   item.meal = meal;
-  item.id = Date.now().toString() + Math.random().toString(16).slice(2);
+  item.id = createItemId();
   today.push(item);
   saveTodayState();
   renderAll();
@@ -591,6 +615,8 @@ document.querySelectorAll("nav button").forEach(button => {
   });
 });
 
+on("mealSections", "click", handleMealSectionClick);
+on("mealSections", "keydown", handleQtyEditKey);
 on("addFood", "click", addFood);
 on("search", "input", populateFoods);
 on("foodSelect", "change", () => syncServingFromSelection(true));
