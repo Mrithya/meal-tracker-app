@@ -68,6 +68,23 @@ const FOODS = [
     "note": "2 egg whites"
   },
   {
+    "name": "Extra Large Boiled Egg White",
+    "category": "Protein",
+    "serving": 37,
+    "calories": 19,
+    "completeProtein": 4,
+    "totalProtein": 4,
+    "carbs": 0,
+    "fat": 0,
+    "fiber": 0,
+    "calcium": 2,
+    "iron": 0.1,
+    "potassium": 56,
+    "selenium": 7,
+    "omega3": 0,
+    "note": "1 extra large egg white, boiled"
+  },
+  {
     "name": "Chicken Breast Raw",
     "category": "Protein",
     "serving": 100,
