@@ -29,6 +29,17 @@ function scaled(food, qty){
   return out;
 }
 
+function foodFromLoggedItem(item){
+  const food = allFoods().find(f => f.name === item.name);
+  if(food) return food;
+  const qty = Number(item.qty || 0);
+  const serving = Number(item.serving || qty || 1);
+  const factor = qty ? serving / qty : 1;
+  const foodLike = {name: item.name, category: item.category, serving, note: item.note};
+  keys.forEach(k => foodLike[k] = +(Number(item[k] || 0) * factor).toFixed(1));
+  return foodLike;
+}
+
 function totals(items=today){
   const t = {};
   keys.forEach(k => t[k]=0);
@@ -297,6 +308,10 @@ function formatQty(item){
   return `${count}<div class="small">${grams}g</div>`;
 }
 
+function editQtyControls(item){
+  return `<div class="qtyEditor"><div>${formatQty(item)}</div><div class="qtyEditRow"><input id="qty-${item.id}" type="number" min="0" step="0.1" value="${Number(item.qty || 0)}" onkeydown="handleQtyEditKey(event, '${item.id}')"><button class="updateQty" onclick="updateItemQty('${item.id}')">Update</button></div></div>`;
+}
+
 function renderSummary(){
   const t = totals();
   const target = getTargets();
@@ -335,13 +350,26 @@ function renderSummary(){
     : `<div class="good">Looks balanced so far.</div>`;
 }
 
+function renderMealLogTotals(){
+  const container = document.getElementById("mealLogTotals");
+  if(!container) return;
+  const t = totals();
+  container.innerHTML = `
+    <div class="mealLogTotalCard primary"><span>Today's Calories</span><b>${t.calories} cal</b></div>
+    <div class="mealLogTotalCard"><span>Complete Protein</span><b>${t.completeProtein}g</b></div>
+    <div class="mealLogTotalCard"><span>Carbs</span><b>${t.carbs}g</b></div>
+    <div class="mealLogTotalCard"><span>Fat</span><b>${t.fat}g</b></div>
+  `;
+}
+
 function renderMeals(){
+  renderMealLogTotals();
   document.getElementById("mealSections").innerHTML = meals.map(meal => {
     const items = today.filter(i => i.meal === meal);
     const mt = totals(items);
     return `<div class="meal"><h3>${meal}  <span class="small">${mt.calories} cal, ${mt.completeProtein}g complete protein</span></h3>
       <table><thead><tr><th>Food</th><th>Qty</th><th>Cal</th><th>Protein</th><th>Carbs</th><th>Fat</th><th></th></tr></thead>
-      <tbody>${items.map((i,idx) => `<tr><td>${i.name}<div class="small">${i.note||""}</div></td><td>${formatQty(i)}</td><td>${i.calories}</td><td>${i.completeProtein}</td><td>${i.carbs}</td><td>${i.fat}</td><td><button class="remove" onclick="removeItem('${i.id}')">x</button></td></tr>`).join("")}</tbody></table></div>`
+      <tbody>${items.map(i => `<tr><td>${i.name}<div class="small">${i.note||""}</div></td><td>${editQtyControls(i)}</td><td>${i.calories}</td><td>${i.completeProtein}</td><td>${i.carbs}</td><td>${i.fat}</td><td><button class="remove" onclick="removeItem('${i.id}')">x</button></td></tr>`).join("")}</tbody></table></div>`
   }).join("");
 }
 
@@ -349,6 +377,23 @@ function removeItem(id){
   today = today.filter(i => i.id !== id);
   saveTodayState();
   renderAll();
+}
+
+function updateItemQty(id){
+  const input = document.getElementById(`qty-${id}`);
+  const item = today.find(i => i.id === id);
+  const qty = Number(input && input.value);
+  if(!item || !qty || qty <= 0) return;
+  const updated = scaled(foodFromLoggedItem(item), qty);
+  updated.meal = item.meal;
+  updated.id = item.id;
+  today = today.map(i => i.id === id ? updated : i);
+  saveTodayState();
+  renderAll();
+}
+
+function handleQtyEditKey(event, id){
+  if(event.key === "Enter") updateItemQty(id);
 }
 
 function saveTodayState(){
