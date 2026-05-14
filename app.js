@@ -372,6 +372,7 @@ function renderMeals(){
       <table><thead><tr><th>Food</th><th>Qty</th><th>Cal</th><th>Protein</th><th>Carbs</th><th>Fat</th><th></th></tr></thead>
       <tbody>${items.map(i => `<tr><td>${i.name}<div class="small">${i.note||""}</div></td><td>${editQtyControls(i)}</td><td>${i.calories}</td><td>${i.completeProtein}</td><td>${i.carbs}</td><td>${i.fat}</td><td><button class="remove" onclick="removeItem('${i.id}')">x</button></td></tr>`).join("")}</tbody>
       <tfoot><tr><td colspan="2">${meal} Total</td>${totalCells(mt)}<td></td></tr></tfoot></table></div>`
+      <tbody>${items.map(i => `<tr><td>${i.name}<div class="small">${i.note||""}</div></td><td>${editQtyControls(i)}</td><td>${i.calories}</td><td>${i.completeProtein}</td><td>${i.carbs}</td><td>${i.fat}</td><td><button class="remove" onclick="removeItem('${i.id}')">x</button></td></tr>`).join("")}</tbody></table></div>`
   }).join("");
 }
 
