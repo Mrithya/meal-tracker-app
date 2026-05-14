@@ -12,8 +12,15 @@ function readStorage(key, fallback){
 
 let today = readStorage("todayMeals", []);
 let history = readStorage("dailyHistory", []);
+let measurements = readStorage("measurements", []);
+let workouts = readStorage("workouts", []);
+let customFoods = readStorage("customFoods", []);
 
 const keys = ["calories","completeProtein","totalProtein","carbs","fat","fiber","calcium","iron","potassium","selenium","omega3"];
+
+function allFoods(){
+  return [...FOODS, ...customFoods].sort((a,b) => a.name.localeCompare(b.name));
+}
 
 function scaled(food, qty){
   const factor = Number(qty || 0) / food.serving;
@@ -75,7 +82,12 @@ function buildDataSnapshot(){
     version: 1,
     updatedAt: new Date().toISOString(),
     todayMeals: today,
+    today,
     dailyHistory: history,
+    history,
+    measurements,
+    workouts,
+    customFoods,
     targets: getTargets(),
     currentLog: getCurrentLog()
   };
@@ -83,7 +95,12 @@ function buildDataSnapshot(){
 
 function applyDataSnapshot(data){
   if(Array.isArray(data.todayMeals)) today = data.todayMeals;
+  else if(Array.isArray(data.today)) today = data.today;
   if(Array.isArray(data.dailyHistory)) history = data.dailyHistory;
+  else if(Array.isArray(data.history)) history = data.history;
+  if(Array.isArray(data.measurements)) measurements = data.measurements;
+  if(Array.isArray(data.workouts)) workouts = data.workouts;
+  if(Array.isArray(data.customFoods)) customFoods = data.customFoods;
   if(data.targets) setTargets(data.targets);
   if(data.currentLog) setCurrentLog(data.currentLog);
   saveBrowserState();
@@ -93,12 +110,17 @@ function applyDataSnapshot(data){
 function saveBrowserState(){
   localStorage.setItem("todayMeals", JSON.stringify(today));
   localStorage.setItem("dailyHistory", JSON.stringify(history));
-  localStorage.setItem("mealTargets", JSON.stringify(getTargets()));
+  localStorage.setItem("measurements", JSON.stringify(measurements));
+  localStorage.setItem("workouts", JSON.stringify(workouts));
+  localStorage.setItem("customFoods", JSON.stringify(customFoods));
+  const targets = getTargets();
+  localStorage.setItem("mealTargets", JSON.stringify(targets));
+  localStorage.setItem("targets", JSON.stringify(targets));
   localStorage.setItem("currentLog", JSON.stringify(getCurrentLog()));
 }
 
 function hydrateBrowserState(){
-  setTargets(readStorage("mealTargets", {}));
+  setTargets(readStorage("mealTargets", readStorage("targets", {})));
   setCurrentLog(readStorage("currentLog", {}));
 }
 
@@ -169,10 +191,10 @@ async function connectDataFile(){
 
 function populateFoods(){
   const select = document.getElementById("foodSelect");
-  const q = document.getElementById("search").value.toLowerCase();
+  const q = document.getElementById("search").value;
   const current = select.value;
   select.innerHTML = "";
-  FOODS.filter(f => f.name.toLowerCase().includes(q) || f.category.toLowerCase().includes(q))
+  allFoods().filter(f => foodMatches(f, q))
     .forEach(f => {
       const opt = document.createElement("option");
       opt.value = f.name;
@@ -184,12 +206,63 @@ function populateFoods(){
   syncServingFromSelection(true);
 }
 
+function normalizeText(text){
+  return String(text || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function editDistanceWithinOne(a, b){
+  if(Math.abs(a.length - b.length) > 1) return false;
+  let edits = 0, i = 0, j = 0;
+  while(i < a.length && j < b.length) {
+    if(a[i] === b[j]) {
+      i++;
+      j++;
+    } else {
+      edits++;
+      if(edits > 1) return false;
+      if(a.length > b.length) i++;
+      else if(b.length > a.length) j++;
+      else {
+        i++;
+        j++;
+      }
+    }
+  }
+  return edits + (a.length - i) + (b.length - j) <= 1;
+}
+
+function orderedLettersMatch(word, query){
+  if(query.length < 3) return false;
+  let index = 0;
+  for(const char of word) {
+    if(char === query[index]) index++;
+    if(index === query.length) return true;
+  }
+  return false;
+}
+
+function fuzzyIncludes(text, query){
+  const haystack = normalizeText(text);
+  const needle = normalizeText(query);
+  if(!needle) return true;
+  if(haystack.includes(needle)) return true;
+  const words = haystack.split(" ");
+  return needle.split(" ").every(q => words.some(w => w.includes(q) || orderedLettersMatch(w, q) || (q.length > 3 && editDistanceWithinOne(w, q))));
+}
+
+function foodMatches(food, query){
+  return fuzzyIncludes(`${food.name} ${food.category} ${food.note || ""} ${food.servingLabel || ""}`, query);
+}
+
 function selectedFood(){
-  return FOODS.find(f => f.name === document.getElementById("foodSelect").value);
+  return allFoods().find(f => f.name === document.getElementById("foodSelect").value);
 }
 
 function servingLabel(food){
-  return `${food.serving}g${food.note ? `, ${food.note}` : ""}`;
+  const label = food.servingLabel || `${food.serving}g`;
+  const grams = `${food.serving}g`;
+  const base = label === grams ? grams : `${label} = ${grams}`;
+  return `${base}${food.note ? `, ${food.note}` : ""}`;
 }
 
 function servingCountLabel(qty, serving){
@@ -317,6 +390,104 @@ function renderHistory(){
     history.slice().reverse().map(h => `<tr><td>${h.date}</td><td>${h.weight||""}</td><td>${h.calories}</td><td>${h.completeProtein}</td><td>${h.steps||""}</td><td>${h.cycleDay||""}</td></tr>`).join("") + `</tbody>`;
 }
 
+function saveMeasurement(){
+  measurements.push({
+    date: new Date().toISOString().slice(0,10),
+    weight: document.getElementById("mWeight").value,
+    waist: document.getElementById("waist").value,
+    lowerBelly: document.getElementById("lowerBelly").value,
+    hips: document.getElementById("hips").value,
+    neck: document.getElementById("neck").value,
+    cycleDay: document.getElementById("mCycleDay").value
+  });
+  saveTodayState();
+  renderMeasurements();
+}
+
+function renderMeasurements(){
+  const table = document.getElementById("measurementTable");
+  if(!table) return;
+  table.innerHTML = `<thead><tr><th>Date</th><th>Weight</th><th>Waist</th><th>Lower Belly</th><th>Hips</th><th>Neck</th><th>Cycle</th></tr></thead><tbody>` +
+    measurements.slice().reverse().map(m => `<tr><td>${m.date||""}</td><td>${m.weight||""}</td><td>${m.waist||""}</td><td>${m.lowerBelly||""}</td><td>${m.hips||""}</td><td>${m.neck||""}</td><td>${m.cycleDay||""}</td></tr>`).join("") + `</tbody>`;
+}
+
+function saveWorkout(){
+  const notes = document.getElementById("workoutNotes");
+  workouts.push({
+    date: new Date().toISOString().slice(0,10),
+    type: document.getElementById("workoutType").value,
+    notes: notes.value
+  });
+  notes.value = "";
+  saveTodayState();
+  renderWorkouts();
+}
+
+function renderWorkouts(){
+  const table = document.getElementById("workoutTable");
+  if(!table) return;
+  table.innerHTML = `<thead><tr><th>Date</th><th>Type</th><th>Notes</th></tr></thead><tbody>` +
+    workouts.slice().reverse().map(w => `<tr><td>${w.date||""}</td><td>${w.type||""}</td><td>${w.notes||""}</td></tr>`).join("") + `</tbody>`;
+}
+
+function foodRow(food){
+  return `<tr><td>${food.name}</td><td>${food.category}</td><td>${servingLabel(food)}</td><td>${food.calories}</td><td>${food.completeProtein}</td><td>${food.carbs}</td><td>${food.fat}</td></tr>`;
+}
+
+function renderFoodDatabase(){
+  const table = document.getElementById("foodDbTable");
+  if(!table) return;
+  const q = document.getElementById("foodDbSearch").value;
+  const foods = allFoods().filter(f => foodMatches(f, q));
+  table.innerHTML = `<thead><tr><th>Food</th><th>Category</th><th>Serving</th><th>Cal</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr></thead><tbody>` +
+    foods.map(foodRow).join("") + `</tbody>`;
+}
+
+function numericInput(id){
+  return +document.getElementById(id).value || 0;
+}
+
+function saveCustomFood(){
+  const name = document.getElementById("cfName").value.trim();
+  const serving = numericInput("cfServing") || 100;
+  if(!name) return;
+  const completeProtein = numericInput("cfCompleteProtein");
+  const totalProtein = numericInput("cfTotalProtein") || completeProtein;
+  const food = {
+    name,
+    category: document.getElementById("cfCategory").value.trim() || "Custom",
+    serving,
+    servingLabel: document.getElementById("cfServingLabel").value.trim() || `${serving}g`,
+    defaultMode: document.getElementById("cfDefaultMode").value,
+    calories: numericInput("cfCalories"),
+    completeProtein,
+    totalProtein,
+    carbs: numericInput("cfCarbs"),
+    fat: numericInput("cfFat"),
+    fiber: numericInput("cfFiber"),
+    calcium: numericInput("cfCalcium"),
+    iron: numericInput("cfIron"),
+    potassium: numericInput("cfPotassium"),
+    selenium: numericInput("cfSelenium"),
+    omega3: numericInput("cfOmega3"),
+    note: document.getElementById("cfNote").value.trim() || "Custom food"
+  };
+  const existing = customFoods.findIndex(f => f.name.toLowerCase() === name.toLowerCase());
+  if(existing >= 0) customFoods[existing] = food;
+  else customFoods.push(food);
+  saveTodayState();
+  populateFoods();
+  renderFoodDatabase();
+  renderCustomFoods();
+}
+
+function renderCustomFoods(){
+  const table = document.getElementById("customFoodTable");
+  if(!table) return;
+  table.innerHTML = `<thead><tr><th>Food</th><th>Category</th><th>Serving</th><th>Cal</th><th>Protein</th></tr></thead><tbody>` +
+    customFoods.map(f => `<tr><td>${f.name}</td><td>${f.category}</td><td>${servingLabel(f)}</td><td>${f.calories}</td><td>${f.completeProtein}</td></tr>`).join("") + `</tbody>`;
+}
+
 function exportCsv(){
   const rows = [["date","weight","cycleDay","calories","completeProtein","totalProtein","carbs","fat","fiber","steps","water"]];
   history.forEach(h => rows.push([h.date,h.weight,h.cycleDay,h.calories,h.completeProtein,h.totalProtein,h.carbs,h.fat,h.fiber,h.steps,h.water]));
@@ -335,18 +506,47 @@ function clearToday(){
   }
 }
 
-function renderAll(){ renderSummary(); renderMeals(); renderHistory(); }
+function renderAll(){
+  renderSummary();
+  renderMeals();
+  renderHistory();
+  renderMeasurements();
+  renderWorkouts();
+  renderFoodDatabase();
+  renderCustomFoods();
+}
 
-document.getElementById("addFood").addEventListener("click", addFood);
-document.getElementById("search").addEventListener("input", populateFoods);
-document.getElementById("foodSelect").addEventListener("change", () => syncServingFromSelection(true));
-document.getElementById("qty").addEventListener("input", () => syncServingFromSelection(false));
-document.getElementById("saveDay").addEventListener("click", saveDay);
-document.getElementById("exportCsv").addEventListener("click", exportCsv);
-document.getElementById("clearToday").addEventListener("click", clearToday);
-document.getElementById("connectDataFile").addEventListener("click", connectDataFile);
-document.getElementById("exportJson").addEventListener("click", downloadJson);
-document.getElementById("importJson").addEventListener("change", e => importJsonFile(e.target.files[0]));
+function on(id, event, handler){
+  const element = document.getElementById(id);
+  if(element) element.addEventListener(event, handler);
+}
+
+document.querySelectorAll("nav button").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(section => section.classList.remove("active"));
+    button.classList.add("active");
+    document.getElementById(button.dataset.tab).classList.add("active");
+  });
+});
+
+on("addFood", "click", addFood);
+on("search", "input", populateFoods);
+on("foodSelect", "change", () => syncServingFromSelection(true));
+on("qty", "input", () => syncServingFromSelection(false));
+on("saveDay", "click", saveDay);
+on("saveMeasurement", "click", saveMeasurement);
+on("saveWorkout", "click", saveWorkout);
+on("saveCustomFood", "click", saveCustomFood);
+on("foodDbSearch", "input", renderFoodDatabase);
+on("exportCsv", "click", exportCsv);
+on("exportCsvBackup", "click", exportCsv);
+on("clearToday", "click", clearToday);
+on("connectDataFile", "click", connectDataFile);
+on("exportJson", "click", downloadJson);
+on("exportJsonBackup", "click", downloadJson);
+on("importJson", "change", e => importJsonFile(e.target.files[0]));
+on("importJsonBackup", "change", e => importJsonFile(e.target.files[0]));
 ["weight","cycleDay","steps","water"].forEach(id => document.getElementById(id).addEventListener("input", () => {
   saveBrowserState();
   queueDataFileSave();

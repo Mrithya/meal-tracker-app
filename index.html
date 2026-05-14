@@ -12,7 +12,27 @@
   <p>Local app. Data saves in your browser and can be backed up to iCloud Drive JSON.</p>
 </header>
 
-<section class="targets">
+<nav>
+  <button data-tab="dashboard" class="active">Dashboard</button>
+  <button data-tab="targets">Targets</button>
+  <button data-tab="builder">Meal Logging</button>
+  <button data-tab="logs">Daily Log</button>
+  <button data-tab="measurements">Measurements</button>
+  <button data-tab="workouts">Workouts</button>
+  <button data-tab="foods">Food Database</button>
+  <button data-tab="custom">Custom Foods</button>
+  <button data-tab="backup">Backup</button>
+  <button data-tab="retention">Data Retention</button>
+</nav>
+
+<main>
+<section id="dashboard" class="tab active summary">
+  <h2>Today</h2>
+  <div id="summaryCards" class="cards"></div>
+  <div id="guidance" class="guidance"></div>
+</section>
+
+<section id="targets" class="tab targets">
   <h2>Daily Targets</h2>
   <div class="grid">
     <label>Calories <input id="targetCalories" type="number" value="1300"></label>
@@ -24,13 +44,7 @@
   </div>
 </section>
 
-<section class="summary">
-  <h2>Today</h2>
-  <div id="summaryCards" class="cards"></div>
-  <div id="guidance" class="guidance"></div>
-</section>
-
-<section class="builder">
+<section id="builder" class="tab builder">
   <h2>Meal Builder</h2>
   <div class="controls">
     <select id="meal">
@@ -45,7 +59,7 @@
   <div id="mealSections"></div>
 </section>
 
-<section class="history">
+<section id="logs" class="tab history">
   <h2>Daily Log</h2>
   <div class="controls">
     <input id="weight" type="number" placeholder="Weight kg" step="0.1">
@@ -59,7 +73,74 @@
   <table id="historyTable"></table>
 </section>
 
-<section class="data-sync">
+<section id="measurements" class="tab measurements">
+  <h2>Measurements</h2>
+  <div class="controls">
+    <input id="mWeight" type="number" placeholder="Weight kg" step="0.1">
+    <input id="waist" type="number" placeholder="Waist cm" step="0.1">
+    <input id="lowerBelly" type="number" placeholder="Lower belly cm" step="0.1">
+    <input id="hips" type="number" placeholder="Hips cm" step="0.1">
+    <input id="neck" type="number" placeholder="Neck cm" step="0.1">
+    <input id="mCycleDay" type="number" placeholder="Cycle day">
+    <button id="saveMeasurement">Save Measurement</button>
+  </div>
+  <table id="measurementTable"></table>
+</section>
+
+<section id="workouts" class="tab workouts">
+  <h2>Workout Tracker</h2>
+  <div class="controls">
+    <select id="workoutType">
+      <option>Lower Body</option><option>Upper Body</option><option>Cardio Core</option><option>Walking Pad</option><option>Yoga</option><option>Other</option>
+    </select>
+    <input id="workoutNotes" placeholder="Workout notes, weights, reps">
+    <button id="saveWorkout">Save Workout</button>
+  </div>
+  <table id="workoutTable"></table>
+</section>
+
+<section id="foods" class="tab foods">
+  <h2>Food Database</h2>
+  <input id="foodDbSearch" placeholder="Search database">
+  <table id="foodDbTable"></table>
+</section>
+
+<section id="custom" class="tab custom">
+  <h2>Custom Foods</h2>
+  <div class="controls">
+    <input id="cfName" placeholder="Food name">
+    <input id="cfCategory" placeholder="Category" value="Custom">
+    <input id="cfServing" type="number" placeholder="Serving grams" value="100">
+    <input id="cfServingLabel" placeholder="Serving label, e.g. 1 scoop">
+    <select id="cfDefaultMode"><option value="grams">Grams</option><option value="servings">Servings</option></select>
+    <input id="cfCalories" type="number" placeholder="Calories">
+    <input id="cfCompleteProtein" type="number" placeholder="Complete protein">
+    <input id="cfTotalProtein" type="number" placeholder="Total protein">
+    <input id="cfCarbs" type="number" placeholder="Carbs">
+    <input id="cfFat" type="number" placeholder="Fat">
+    <input id="cfFiber" type="number" placeholder="Fiber">
+    <input id="cfCalcium" type="number" placeholder="Calcium">
+    <input id="cfIron" type="number" placeholder="Iron">
+    <input id="cfPotassium" type="number" placeholder="Potassium">
+    <input id="cfSelenium" type="number" placeholder="Selenium">
+    <input id="cfOmega3" type="number" placeholder="Omega 3">
+    <input id="cfNote" placeholder="Note">
+    <button id="saveCustomFood">Save Custom Food</button>
+  </div>
+  <table id="customFoodTable"></table>
+</section>
+
+<section id="backup" class="tab backup">
+  <h2>Backup / Restore</h2>
+  <div class="controls">
+    <button id="exportJsonBackup">Export JSON</button>
+    <button id="exportCsvBackup">Export CSV</button>
+    <label class="fileButton">Import JSON <input id="importJsonBackup" type="file" accept="application/json,.json"></label>
+  </div>
+  <div class="small">Backups include meals, daily logs, measurements, workouts, custom foods, targets, and current log inputs.</div>
+</section>
+
+<section id="retention" class="tab data-sync">
   <h2>Data Retention</h2>
   <div class="controls">
     <button id="connectDataFile">Connect data.json</button>
@@ -68,6 +149,7 @@
   </div>
   <div id="dataStatus" class="small">Browser storage is active. Connect or import a JSON file to move data between devices.</div>
 </section>
+</main>
 
 <script src="foods.js"></script>
 <script src="app.js"></script>
