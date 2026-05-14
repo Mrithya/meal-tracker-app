@@ -312,6 +312,19 @@ function editQtyControls(item){
   return `<div class="qtyEditor"><div>${formatQty(item)}</div><div class="qtyEditRow"><input id="qty-${item.id}" type="number" min="0" step="0.1" value="${Number(item.qty || 0)}" onkeydown="handleQtyEditKey(event, '${item.id}')"><button class="updateQty" onclick="updateItemQty('${item.id}')">Update</button></div></div>`;
 }
 
+function totalCells(totals){
+  return `<td>${totals.calories}</td><td>${totals.completeProtein}</td><td>${totals.carbs}</td><td>${totals.fat}</td>`;
+}
+
+function renderBuilderTotals(){
+  const totalsNow = totals();
+  const target = getTargets();
+  const remaining = target.calories ? target.calories - totalsNow.calories : null;
+  const builderTotals = document.getElementById("builderTotals");
+  if(!builderTotals) return;
+  builderTotals.innerHTML = `<div><span>Running Daily Total</span><b>${totalsNow.calories} cal</b>${remaining !== null ? `<span class="small">${remaining.toFixed(1)} cal remaining</span>` : ""}</div><div><span>Complete Protein</span><b>${totalsNow.completeProtein}g</b></div><div><span>Carbs</span><b>${totalsNow.carbs}g</b></div><div><span>Fat</span><b>${totalsNow.fat}g</b></div>`;
+}
+
 function renderSummary(){
   const t = totals();
   const target = getTargets();
@@ -364,11 +377,14 @@ function renderMealLogTotals(){
 
 function renderMeals(){
   renderMealLogTotals();
+  renderBuilderTotals();
   document.getElementById("mealSections").innerHTML = meals.map(meal => {
     const items = today.filter(i => i.meal === meal);
     const mt = totals(items);
     return `<div class="meal"><h3>${meal}  <span class="small">${mt.calories} cal, ${mt.completeProtein}g complete protein</span></h3>
       <table><thead><tr><th>Food</th><th>Qty</th><th>Cal</th><th>Protein</th><th>Carbs</th><th>Fat</th><th></th></tr></thead>
+      <tbody>${items.map(i => `<tr><td>${i.name}<div class="small">${i.note||""}</div></td><td>${editQtyControls(i)}</td><td>${i.calories}</td><td>${i.completeProtein}</td><td>${i.carbs}</td><td>${i.fat}</td><td><button class="remove" onclick="removeItem('${i.id}')">x</button></td></tr>`).join("")}</tbody>
+      <tfoot><tr><td colspan="2">${meal} Total</td>${totalCells(mt)}<td></td></tr></tfoot></table></div>`
       <tbody>${items.map(i => `<tr><td>${i.name}<div class="small">${i.note||""}</div></td><td>${editQtyControls(i)}</td><td>${i.calories}</td><td>${i.completeProtein}</td><td>${i.carbs}</td><td>${i.fat}</td><td><button class="remove" onclick="removeItem('${i.id}')">x</button></td></tr>`).join("")}</tbody></table></div>`
   }).join("");
 }
