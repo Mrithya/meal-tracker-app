@@ -363,7 +363,20 @@ function renderSummary(){
     : `<div class="good">Looks balanced so far.</div>`;
 }
 
+function renderMealLogTotals(){
+  const container = document.getElementById("mealLogTotals");
+  if(!container) return;
+  const t = totals();
+  container.innerHTML = `
+    <div class="mealLogTotalCard primary"><span>Today's Calories</span><b>${t.calories} cal</b></div>
+    <div class="mealLogTotalCard"><span>Complete Protein</span><b>${t.completeProtein}g</b></div>
+    <div class="mealLogTotalCard"><span>Carbs</span><b>${t.carbs}g</b></div>
+    <div class="mealLogTotalCard"><span>Fat</span><b>${t.fat}g</b></div>
+  `;
+}
+
 function renderMeals(){
+  renderMealLogTotals();
   renderBuilderTotals();
   document.getElementById("mealSections").innerHTML = meals.map(meal => {
     const items = today.filter(i => i.meal === meal);

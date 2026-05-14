@@ -24,12 +24,18 @@ button:hover{opacity:.9}
 .card b{display:block; font-size:18px}
 .warning{background:#fff3cd; border-left:5px solid #d99a00; padding:10px; border-radius:10px; margin:8px 0}
 .good{background:#eaf6ef; border-left:5px solid var(--green); padding:10px; border-radius:10px; margin:8px 0}
+.mealLogTotals{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin:12px 0}
+.mealLogTotalCard{background:var(--cream); border-left:5px solid var(--green); padding:10px; border-radius:10px}
+.mealLogTotalCard.primary{background:var(--green); color:white}
+.mealLogTotalCard span{display:block; font-size:12px}
+.mealLogTotalCard b{display:block; font-size:20px}
 .builderTotals{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:8px; margin:12px 0}
 .builderTotals div{background:var(--cream); border-left:5px solid var(--green); padding:10px; border-radius:10px}
 .builderTotals span{display:block; font-size:12px; color:#666}
 .builderTotals b{display:block; font-size:18px}
 .meal{margin-top:12px; border:1px solid var(--sand); border-radius:12px; overflow:hidden}
 .meal h3{background:var(--green); color:white; margin:0; padding:10px}
+.meal h3 .small{color:white}
 table{width:100%; border-collapse:collapse; background:white}
 th,td{border-bottom:1px solid #eee; padding:8px; text-align:left; font-size:13px}
 tfoot td{font-weight:bold; background:var(--cream)}
