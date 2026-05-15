@@ -2142,6 +2142,25 @@ const FOODS = [
     "defaultMode": "servings"
   },
   {
+    "name": "Vitamin D3",
+    "category": "Supplement",
+    "serving": 1,
+    "calories": 0,
+    "completeProtein": 0,
+    "totalProtein": 0,
+    "carbs": 0,
+    "fat": 0,
+    "fiber": 0,
+    "calcium": 0,
+    "iron": 0,
+    "potassium": 0,
+    "selenium": 0,
+    "omega3": 0,
+    "note": "1 capsule, vitamin D amount not totaled by app",
+    "servingLabel": "1 capsule",
+    "defaultMode": "servings"
+  },
+  {
     "name": "Collagen Organika",
     "category": "Supplement",
     "serving": 10,
