@@ -10,11 +10,27 @@ function readStorage(key, fallback){
   }
 }
 
-let today = readStorage("todayMeals", []);
-let history = readStorage("dailyHistory", []);
-let measurements = readStorage("measurements", []);
-let workouts = readStorage("workouts", []);
-let customFoods = readStorage("customFoods", []);
+function asArray(value){
+  return Array.isArray(value) ? value : [];
+}
+
+function isRecord(value){
+  return value && typeof value === "object";
+}
+
+function asRecordArray(value){
+  return asArray(value).filter(isRecord);
+}
+
+function isValidFood(food){
+  return food && typeof food.name === "string" && Number.isFinite(Number(food.serving));
+}
+
+let today = asRecordArray(readStorage("todayMeals", []));
+let history = asRecordArray(readStorage("dailyHistory", []));
+let measurements = asRecordArray(readStorage("measurements", []));
+let workouts = asRecordArray(readStorage("workouts", []));
+let customFoods = asRecordArray(readStorage("customFoods", [])).filter(isValidFood);
 
 const keys = ["calories","completeProtein","totalProtein","carbs","fat","fiber","calcium","iron","potassium","selenium","omega3"];
 
@@ -42,7 +58,8 @@ function ensureTodayItemIds(){
 ensureTodayItemIds();
 
 function allFoods(){
-  return [...FOODS, ...customFoods].sort((a,b) => a.name.localeCompare(b.name));
+  customFoods = asRecordArray(customFoods).filter(isValidFood);
+  return [...FOODS, ...customFoods].filter(isValidFood).sort((a,b) => a.name.localeCompare(b.name));
 }
 
 function scaled(food, qty){
@@ -128,13 +145,11 @@ function buildDataSnapshot(){
 }
 
 function applyDataSnapshot(data){
-  if(Array.isArray(data.todayMeals)) today = data.todayMeals;
-  else if(Array.isArray(data.today)) today = data.today;
-  if(Array.isArray(data.dailyHistory)) history = data.dailyHistory;
-  else if(Array.isArray(data.history)) history = data.history;
-  if(Array.isArray(data.measurements)) measurements = data.measurements;
-  if(Array.isArray(data.workouts)) workouts = data.workouts;
-  if(Array.isArray(data.customFoods)) customFoods = data.customFoods;
+  today = asRecordArray(data.todayMeals || data.today || today);
+  history = asRecordArray(data.dailyHistory || data.history || history);
+  measurements = asRecordArray(data.measurements || measurements);
+  workouts = asRecordArray(data.workouts || workouts);
+  customFoods = asRecordArray(data.customFoods || customFoods).filter(isValidFood);
   ensureTodayItemIds();
   if(data.targets) setTargets(data.targets);
   if(data.currentLog) setCurrentLog(data.currentLog);
@@ -409,7 +424,6 @@ function renderMeals(){
       <table><thead><tr><th>Food</th><th>Qty</th><th>Cal</th><th>Protein</th><th>Carbs</th><th>Fat</th><th></th></tr></thead>
       <tbody>${items.map(i => `<tr><td>${i.name}<div class="small">${i.note||""}</div></td><td>${editQtyControls(i)}</td><td>${i.calories}</td><td>${i.completeProtein}</td><td>${i.carbs}</td><td>${i.fat}</td><td><button class="remove" onclick="removeItem('${i.id}')">x</button></td></tr>`).join("")}</tbody>
       <tfoot><tr><td colspan="2">${meal} Total</td>${totalCells(mt)}<td></td></tr></tfoot></table></div>`
-      <tbody>${items.map(i => `<tr><td>${i.name}<div class="small">${i.note||""}</div></td><td>${editQtyControls(i)}</td><td>${i.calories}</td><td>${i.completeProtein}</td><td>${i.carbs}</td><td>${i.fat}</td><td><button class="remove" onclick="removeItem('${i.id}')">x</button></td></tr>`).join("")}</tbody></table></div>`
   }).join("");
 }
 
@@ -615,8 +629,6 @@ document.querySelectorAll("nav button").forEach(button => {
   });
 });
 
-on("mealSections", "click", handleMealSectionClick);
-on("mealSections", "keydown", handleQtyEditKey);
 on("addFood", "click", addFood);
 on("search", "input", populateFoods);
 on("foodSelect", "change", () => syncServingFromSelection(true));
