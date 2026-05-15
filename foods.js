@@ -1707,6 +1707,25 @@ const FOODS = [
     "defaultMode": "grams"
   },
   {
+    "name": "Queen of Greens Salad",
+    "category": "Greens",
+    "serving": 150,
+    "calories": 120,
+    "completeProtein": 4,
+    "totalProtein": 4,
+    "carbs": 10,
+    "fat": 7,
+    "fiber": 3,
+    "calcium": 60,
+    "iron": 1.4,
+    "potassium": 300,
+    "selenium": 1,
+    "omega3": 0.1,
+    "note": "Estimated mixed greens salad",
+    "servingLabel": "1 salad",
+    "defaultMode": "servings"
+  },
+  {
     "name": "Adai",
     "category": "South Indian Breakfast",
     "serving": 100,
