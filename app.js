@@ -352,7 +352,7 @@ function editQtyControls(item){
 }
 
 function totalCells(totals){
-  return `<td>${totals.calories}</td><td>${totals.completeProtein}</td><td>${totals.carbs}</td><td>${totals.fat}</td>`;
+  return `<td>${totals.calories}</td><td>${totals.completeProtein}</td><td>${totals.carbs}</td><td>${totals.fiber}</td><td>${totals.fat}</td>`;
 }
 
 function renderBuilderTotals(){
@@ -361,7 +361,7 @@ function renderBuilderTotals(){
   const remaining = target.calories ? target.calories - totalsNow.calories : null;
   const builderTotals = document.getElementById("builderTotals");
   if(!builderTotals) return;
-  builderTotals.innerHTML = `<div><span>Running Daily Total</span><b>${totalsNow.calories} cal</b>${remaining !== null ? `<span class="small">${remaining.toFixed(1)} cal remaining</span>` : ""}</div><div><span>Complete Protein</span><b>${totalsNow.completeProtein}g</b></div><div><span>Carbs</span><b>${totalsNow.carbs}g</b></div><div><span>Fat</span><b>${totalsNow.fat}g</b></div>`;
+  builderTotals.innerHTML = `<div><span>Running Daily Total</span><b>${totalsNow.calories} cal</b>${remaining !== null ? `<span class="small">${remaining.toFixed(1)} cal remaining</span>` : ""}</div><div><span>Complete Protein</span><b>${totalsNow.completeProtein}g</b></div><div><span>Carbs</span><b>${totalsNow.carbs}g</b></div><div><span>Fiber</span><b>${totalsNow.fiber}g</b></div><div><span>Fat</span><b>${totalsNow.fat}g</b></div>`;
 }
 
 function renderSummary(){
@@ -410,6 +410,7 @@ function renderMealLogTotals(){
     <div class="mealLogTotalCard primary"><span>Today's Calories</span><b>${t.calories} cal</b></div>
     <div class="mealLogTotalCard"><span>Complete Protein</span><b>${t.completeProtein}g</b></div>
     <div class="mealLogTotalCard"><span>Carbs</span><b>${t.carbs}g</b></div>
+    <div class="mealLogTotalCard"><span>Fiber</span><b>${t.fiber}g</b></div>
     <div class="mealLogTotalCard"><span>Fat</span><b>${t.fat}g</b></div>
   `;
 }
@@ -420,9 +421,9 @@ function renderMeals(){
   document.getElementById("mealSections").innerHTML = meals.map(meal => {
     const items = today.filter(i => i.meal === meal);
     const mt = totals(items);
-    return `<div class="meal"><h3>${meal}  <span class="small">${mt.calories} cal, ${mt.completeProtein}g complete protein</span></h3>
-      <table><thead><tr><th>Food</th><th>Qty</th><th>Cal</th><th>Protein</th><th>Carbs</th><th>Fat</th><th></th></tr></thead>
-      <tbody>${items.map(i => `<tr><td>${i.name}<div class="small">${i.note||""}</div></td><td>${editQtyControls(i)}</td><td>${i.calories}</td><td>${i.completeProtein}</td><td>${i.carbs}</td><td>${i.fat}</td><td><button class="remove" onclick="removeItem('${i.id}')">x</button></td></tr>`).join("")}</tbody>
+    return `<div class="meal"><h3>${meal}  <span class="small">${mt.calories} cal, ${mt.completeProtein}g protein, ${mt.fiber}g fiber, ${mt.fat}g fat</span></h3>
+      <table><thead><tr><th>Food</th><th>Qty</th><th>Cal</th><th>Protein</th><th>Carbs</th><th>Fiber</th><th>Fat</th><th></th></tr></thead>
+      <tbody>${items.map(i => `<tr><td>${i.name}<div class="small">${i.note||""}</div></td><td>${editQtyControls(i)}</td><td>${i.calories}</td><td>${i.completeProtein}</td><td>${i.carbs}</td><td>${i.fiber}</td><td>${i.fat}</td><td><button class="remove" onclick="removeItem('${i.id}')">x</button></td></tr>`).join("")}</tbody>
       <tfoot><tr><td colspan="2">${meal} Total</td>${totalCells(mt)}<td></td></tr></tfoot></table></div>`
   }).join("");
 }
@@ -485,8 +486,8 @@ function saveDay(){
 }
 
 function renderHistory(){
-  document.getElementById("historyTable").innerHTML = `<thead><tr><th>Date</th><th>Weight</th><th>Calories</th><th>Complete Protein</th><th>Steps</th><th>Cycle</th></tr></thead><tbody>` +
-    history.slice().reverse().map(h => `<tr><td>${h.date}</td><td>${h.weight||""}</td><td>${h.calories}</td><td>${h.completeProtein}</td><td>${h.steps||""}</td><td>${h.cycleDay||""}</td></tr>`).join("") + `</tbody>`;
+  document.getElementById("historyTable").innerHTML = `<thead><tr><th>Date</th><th>Weight</th><th>Calories</th><th>Complete Protein</th><th>Fiber</th><th>Fat</th><th>Steps</th><th>Cycle</th></tr></thead><tbody>` +
+    history.slice().reverse().map(h => `<tr><td>${h.date}</td><td>${h.weight||""}</td><td>${h.calories}</td><td>${h.completeProtein}</td><td>${h.fiber||0}</td><td>${h.fat||0}</td><td>${h.steps||""}</td><td>${h.cycleDay||""}</td></tr>`).join("") + `</tbody>`;
 }
 
 function saveMeasurement(){
