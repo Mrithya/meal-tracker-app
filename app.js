@@ -367,6 +367,12 @@ function renderBuilderTotals(){
 function renderSummary(){
   const t = totals();
   const target = getTargets();
+  const nutrientTargets = {
+    calcium: 1000,
+    calciumUpper: 2500,
+    iron: 18,
+    ironUpper: 45
+  };
   const cards = [
     ["Calories", t.calories, target.calories, "cal"],
     ["Complete Protein", t.completeProtein, target.protein, "g"],
@@ -374,12 +380,15 @@ function renderSummary(){
     ["Carbs", t.carbs, target.carbs, "g"],
     ["Fat", t.fat, target.fat, "g"],
     ["Fiber", t.fiber, target.fiber, "g"],
+    ["Calcium", t.calcium, nutrientTargets.calcium, "mg", nutrientTargets.calciumUpper],
+    ["Iron", t.iron, nutrientTargets.iron, "mg", nutrientTargets.ironUpper],
     ["Selenium", t.selenium, 55, "mcg"],
     ["Omega 3", t.omega3, 1.1, "g"]
   ];
-  document.getElementById("summaryCards").innerHTML = cards.map(([n,v,target,u]) => {
+  document.getElementById("summaryCards").innerHTML = cards.map(([n,v,target,u,upper]) => {
     const rem = target !== null ? `<span class="small">Remaining: ${(target-v).toFixed(1)} ${u}</span>` : "";
-    return `<div class="card"><span>${n}</span><b>${v} ${u}</b>${rem}</div>`;
+    const limit = upper ? `<span class="small">Upper limit: ${upper} ${u}</span>` : "";
+    return `<div class="card"><span>${n}</span><b>${v} ${u}</b>${rem}${limit}</div>`;
   }).join("");
 
   const warnings = [];
@@ -392,6 +401,10 @@ function renderSummary(){
   if(t.completeProtein < target.protein - 25) warnings.push("Complete protein is still low. Next meal should include chicken, egg whites, yogurt, cottage cheese, fish, tofu or soya chunks.");
   if(t.fat > target.fat) warnings.push("Fat is above target. Keep the next meal lean.");
   if(t.fiber < 15) warnings.push("Fiber is low. Add poriyal, greens, berries, chia or legumes.");
+  if(t.calcium < nutrientTargets.calcium * 0.7) warnings.push("Calcium is low for an adult woman target. Add yogurt, milk, fortified foods, tofu, sardines or greens.");
+  if(t.iron < nutrientTargets.iron * 0.7) warnings.push("Iron is low for a woman in her 30s. Add lean meat, fish, eggs, legumes, spinach or iron-fortified foods.");
+  if(t.calcium > nutrientTargets.calciumUpper) warnings.push("Calcium is above the adult upper limit. Avoid extra calcium supplements today unless prescribed.");
+  if(t.iron > nutrientTargets.ironUpper) warnings.push("Iron is above the adult upper limit. Avoid extra iron supplements unless prescribed.");
   if(t.selenium > 160) warnings.push("Selenium is high. Avoid extra Brazil nuts today.");
   if(hasNuts && hasSardines && hasGuac) warnings.push("You have nuts + sardines/salmon + guac. Avoid more fats today.");
   if(hasPaneer && hasNuts) warnings.push("Paneer + nuts today. Skip peanut butter or extra guac.");
