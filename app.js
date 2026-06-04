@@ -32,7 +32,7 @@ let measurements = asRecordArray(readStorage("measurements", []));
 let workouts = asRecordArray(readStorage("workouts", []));
 let customFoods = asRecordArray(readStorage("customFoods", [])).filter(isValidFood);
 
-const keys = ["calories","completeProtein","totalProtein","carbs","fat","fiber","calcium","iron","potassium","selenium","omega3"];
+const keys = ["calories","completeProtein","totalProtein","carbs","fat","fiber","calcium","iron","magnesium","potassium","sodium","selenium","omega3","vitaminD"];
 
 function createItemId(){
   return `meal-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -371,7 +371,12 @@ function renderSummary(){
     calcium: 1000,
     calciumUpper: 2500,
     iron: 18,
-    ironUpper: 45
+    ironUpper: 45,
+    magnesium: 320,
+    potassium: 2600,
+    sodiumUpper: 2300,
+    vitaminD: 15,
+    vitaminDUpper: 100
   };
   const cards = [
     ["Calories", t.calories, target.calories, "cal"],
@@ -382,8 +387,12 @@ function renderSummary(){
     ["Fiber", t.fiber, target.fiber, "g"],
     ["Calcium", t.calcium, nutrientTargets.calcium, "mg", nutrientTargets.calciumUpper],
     ["Iron", t.iron, nutrientTargets.iron, "mg", nutrientTargets.ironUpper],
+    ["Magnesium", t.magnesium, nutrientTargets.magnesium, "mg"],
+    ["Potassium", t.potassium, nutrientTargets.potassium, "mg"],
+    ["Sodium", t.sodium, nutrientTargets.sodiumUpper, "mg"],
     ["Selenium", t.selenium, 55, "mcg"],
-    ["Omega 3", t.omega3, 1.1, "g"]
+    ["Omega 3", t.omega3, 1.1, "g"],
+    ["Vitamin D", t.vitaminD, nutrientTargets.vitaminD, "mcg", nutrientTargets.vitaminDUpper]
   ];
   document.getElementById("summaryCards").innerHTML = cards.map(([n,v,target,u,upper]) => {
     const rem = target !== null ? `<span class="small">Remaining: ${(target-v).toFixed(1)} ${u}</span>` : "";
@@ -403,8 +412,13 @@ function renderSummary(){
   if(t.fiber < 15) warnings.push("Fiber is low. Add poriyal, greens, berries, chia or legumes.");
   if(t.calcium < nutrientTargets.calcium * 0.7) warnings.push("Calcium is low for an adult woman target. Add yogurt, milk, fortified foods, tofu, sardines or greens.");
   if(t.iron < nutrientTargets.iron * 0.7) warnings.push("Iron is low for a woman in her 30s. Add lean meat, fish, eggs, legumes, spinach or iron-fortified foods.");
+  if(t.magnesium < nutrientTargets.magnesium * 0.7) warnings.push("Magnesium is low. Add pumpkin seeds, nuts, legumes, spinach, whole grains or magnesium-rich foods.");
+  if(t.potassium < nutrientTargets.potassium * 0.7) warnings.push("Potassium is low. Add banana, potato, sweet potato, beans, yogurt, greens or coconut water.");
+  if(t.vitaminD < nutrientTargets.vitaminD * 0.7) warnings.push("Vitamin D is low from logged foods/supplements. Add vitamin D3, fortified foods, eggs or fatty fish if appropriate.");
   if(t.calcium > nutrientTargets.calciumUpper) warnings.push("Calcium is above the adult upper limit. Avoid extra calcium supplements today unless prescribed.");
   if(t.iron > nutrientTargets.ironUpper) warnings.push("Iron is above the adult upper limit. Avoid extra iron supplements unless prescribed.");
+  if(t.sodium > nutrientTargets.sodiumUpper) warnings.push("Sodium is above the daily limit. Reduce salty packaged foods, sauces, pickles, deli meats or restaurant foods today.");
+  if(t.vitaminD > nutrientTargets.vitaminDUpper) warnings.push("Vitamin D is above the adult upper limit. Avoid extra D3 unless prescribed.");
   if(t.selenium > 160) warnings.push("Selenium is high. Avoid extra Brazil nuts today.");
   if(hasNuts && hasSardines && hasGuac) warnings.push("You have nuts + sardines/salmon + guac. Avoid more fats today.");
   if(hasPaneer && hasNuts) warnings.push("Paneer + nuts today. Skip peanut butter or extra guac.");
@@ -580,9 +594,12 @@ function saveCustomFood(){
     fiber: numericInput("cfFiber"),
     calcium: numericInput("cfCalcium"),
     iron: numericInput("cfIron"),
+    magnesium: numericInput("cfMagnesium"),
     potassium: numericInput("cfPotassium"),
+    sodium: numericInput("cfSodium"),
     selenium: numericInput("cfSelenium"),
     omega3: numericInput("cfOmega3"),
+    vitaminD: numericInput("cfVitaminD"),
     note: document.getElementById("cfNote").value.trim() || "Custom food"
   };
   const existing = customFoods.findIndex(f => f.name.toLowerCase() === name.toLowerCase());
@@ -602,8 +619,8 @@ function renderCustomFoods(){
 }
 
 function exportCsv(){
-  const rows = [["date","weight","cycleDay","calories","completeProtein","totalProtein","carbs","fat","fiber","steps","water"]];
-  history.forEach(h => rows.push([h.date,h.weight,h.cycleDay,h.calories,h.completeProtein,h.totalProtein,h.carbs,h.fat,h.fiber,h.steps,h.water]));
+  const rows = [["date","weight","cycleDay","calories","completeProtein","totalProtein","carbs","fat","fiber","calcium","iron","magnesium","potassium","sodium","selenium","omega3","vitaminD","steps","water"]];
+  history.forEach(h => rows.push([h.date,h.weight,h.cycleDay,h.calories,h.completeProtein,h.totalProtein,h.carbs,h.fat,h.fiber,h.calcium,h.iron,h.magnesium,h.potassium,h.sodium,h.selenium,h.omega3,h.vitaminD,h.steps,h.water]));
   const csv = rows.map(r => r.join(",")).join("\n");
   const blob = new Blob([csv], {type:"text/csv"});
   const url = URL.createObjectURL(blob);
