@@ -41,6 +41,8 @@ th,td{border-bottom:1px solid #eee; padding:8px; text-align:left; font-size:13px
 tfoot td{font-weight:bold; background:var(--cream)}
 .small{font-size:12px; color:#666}
 .remove{background:var(--rose); padding:6px 8px}
+.mealItemActions{display:flex; gap:8px; align-items:center; margin-top:8px}
+.mealItemActions select{min-width:150px}
 .qtyEditor{display:grid; gap:6px}
 .qtyEditRow{display:flex; gap:6px; align-items:center}
 .qtyEditRow input{width:90px; padding:6px}
@@ -48,5 +50,16 @@ tfoot td{font-weight:bold; background:var(--cream)}
 @media(max-width:700px){
   section{margin:10px; padding:12px}
   nav{padding:8px 10px}
-  th:nth-child(5),td:nth-child(5),th:nth-child(6),td:nth-child(6){display:none}
+  .meal{overflow:visible}
+  .meal table,.meal thead,.meal tbody,.meal tfoot,.meal tr,.meal td{display:block; width:100%}
+  .meal thead{display:none}
+  .meal tbody tr{padding:10px; border-bottom:1px solid #eee}
+  .meal tbody td{border-bottom:0; padding:4px 0}
+  .meal tbody td[data-label]:not(:first-child)::before{content:attr(data-label) ": "; font-weight:bold; color:#666}
+  .meal tfoot tr{background:var(--cream); padding:10px}
+  .meal tfoot td{border-bottom:0; padding:4px 0}
+  .mealItemActions{display:grid; grid-template-columns:1fr auto; gap:8px}
+  .mealItemActions select{min-width:0; width:100%}
+  .qtyEditRow{display:grid; grid-template-columns:1fr auto}
+  .qtyEditRow input{width:100%}
 }

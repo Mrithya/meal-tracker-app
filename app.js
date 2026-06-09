@@ -351,6 +351,11 @@ function editQtyControls(item){
   return `<div class="qtyEditor"><div>${formatQty(item)}</div><div class="qtyEditRow"><input id="qty-${item.id}" type="number" min="0" step="0.1" value="${Number(item.qty || 0)}" onkeydown="handleQtyEditKey(event, '${item.id}')"><button class="updateQty" onclick="updateItemQty('${item.id}')">Update</button></div></div>`;
 }
 
+function moveMealControls(item){
+  const options = meals.map(meal => `<option value="${meal}"${item.meal === meal ? " selected" : ""}>${meal}</option>`).join("");
+  return `<div class="mealItemActions"><select aria-label="Move ${item.name} to another meal" onchange="moveItem('${item.id}', this.value)">${options}</select><button class="remove" onclick="removeItem('${item.id}')">Delete</button></div>`;
+}
+
 function totalCells(totals){
   return `<td>${totals.calories}</td><td>${totals.completeProtein}</td><td>${totals.carbs}</td><td>${totals.fiber}</td><td>${totals.fat}</td>`;
 }
@@ -449,10 +454,17 @@ function renderMeals(){
     const items = today.filter(i => i.meal === meal);
     const mt = totals(items);
     return `<div class="meal"><h3>${meal}  <span class="small">${mt.calories} cal, ${mt.completeProtein}g protein, ${mt.fiber}g fiber, ${mt.fat}g fat</span></h3>
-      <table><thead><tr><th>Food</th><th>Qty</th><th>Cal</th><th>Protein</th><th>Carbs</th><th>Fiber</th><th>Fat</th><th></th></tr></thead>
-      <tbody>${items.map(i => `<tr><td>${i.name}<div class="small">${i.note||""}</div></td><td>${editQtyControls(i)}</td><td>${i.calories}</td><td>${i.completeProtein}</td><td>${i.carbs}</td><td>${i.fiber}</td><td>${i.fat}</td><td><button class="remove" onclick="removeItem('${i.id}')">x</button></td></tr>`).join("")}</tbody>
-      <tfoot><tr><td colspan="2">${meal} Total</td>${totalCells(mt)}<td></td></tr></tfoot></table></div>`
+      <table><thead><tr><th>Food</th><th>Qty</th><th>Cal</th><th>Protein</th><th>Carbs</th><th>Fiber</th><th>Fat</th></tr></thead>
+      <tbody>${items.map(i => `<tr><td data-label="Food"><strong>${i.name}</strong><div class="small">${i.note||""}</div>${moveMealControls(i)}</td><td data-label="Qty">${editQtyControls(i)}</td><td data-label="Cal">${i.calories}</td><td data-label="Protein">${i.completeProtein}</td><td data-label="Carbs">${i.carbs}</td><td data-label="Fiber">${i.fiber}</td><td data-label="Fat">${i.fat}</td></tr>`).join("")}</tbody>
+      <tfoot><tr><td colspan="2">${meal} Total</td>${totalCells(mt)}</tr></tfoot></table></div>`
   }).join("");
+}
+
+function moveItem(id, meal){
+  if(!meals.includes(meal)) return;
+  today = today.map(item => item.id === id ? {...item, meal} : item);
+  saveTodayState();
+  renderAll();
 }
 
 function removeItem(id){
