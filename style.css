@@ -53,13 +53,18 @@ tfoot td{font-weight:bold; background:var(--cream)}
   .meal{overflow:visible}
   .meal table,.meal thead,.meal tbody,.meal tfoot,.meal tr,.meal td{display:block; width:100%}
   .meal thead{display:none}
-  .meal tbody tr{padding:10px; border-bottom:1px solid #eee}
-  .meal tbody td{border-bottom:0; padding:4px 0}
-  .meal tbody td[data-label]:not(:first-child)::before{content:attr(data-label) ": "; font-weight:bold; color:#666}
+  .meal tbody tr{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; padding:10px; border-bottom:1px solid #eee}
+  .meal tbody td{border-bottom:0; padding:0}
+  .meal tbody td[data-label="Food"],.meal tbody td[data-label="Qty"]{grid-column:1/-1}
+  .meal tbody td[data-label="Cal"],.meal tbody td[data-label="Protein"],.meal tbody td[data-label="Carbs"],.meal tbody td[data-label="Fiber"],.meal tbody td[data-label="Fat"]{background:var(--cream); border-radius:8px; padding:6px 4px; text-align:center; font-size:12px}
+  .meal tbody td[data-label="Cal"]::before,.meal tbody td[data-label="Protein"]::before,.meal tbody td[data-label="Carbs"]::before,.meal tbody td[data-label="Fiber"]::before,.meal tbody td[data-label="Fat"]::before{content:attr(data-label); display:block; font-size:10px; font-weight:bold; color:#666}
   .meal tfoot tr{background:var(--cream); padding:10px}
   .meal tfoot td{border-bottom:0; padding:4px 0}
-  .mealItemActions{display:grid; grid-template-columns:1fr auto; gap:8px}
+  .mealItemActions{display:grid; grid-template-columns:minmax(0,1fr) 40px; gap:6px}
   .mealItemActions select{min-width:0; width:100%}
-  .qtyEditRow{display:grid; grid-template-columns:1fr auto}
+  .mealItemActions .remove{padding:6px 0}
+  .qtyEditor{gap:4px}
+  .qtyEditRow{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px}
   .qtyEditRow input{width:100%}
+  .updateQty{padding:6px 8px}
 }

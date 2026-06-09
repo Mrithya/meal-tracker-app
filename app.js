@@ -353,7 +353,7 @@ function editQtyControls(item){
 
 function moveMealControls(item){
   const options = meals.map(meal => `<option value="${meal}"${item.meal === meal ? " selected" : ""}>${meal}</option>`).join("");
-  return `<div class="mealItemActions"><select aria-label="Move ${item.name} to another meal" onchange="moveItem('${item.id}', this.value)">${options}</select><button class="remove" onclick="removeItem('${item.id}')">Delete</button></div>`;
+  return `<div class="mealItemActions"><select aria-label="Move ${item.name} to another meal" onchange="moveItem('${item.id}', this.value)">${options}</select><button class="remove" aria-label="Delete ${item.name}" onclick="removeItem('${item.id}')">X</button></div>`;
 }
 
 function totalCells(totals){
